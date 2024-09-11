@@ -1,0 +1,7 @@
+Test push fra Andreas
+
+Hej Markus håber du har en forrygende idag.
+
+Det har jeg for nu har jeg fået hul igennem git submodules
+
+Intet gør en glad som git xD
