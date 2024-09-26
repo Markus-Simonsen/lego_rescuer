@@ -25,6 +25,7 @@ import time
 #                                    Classes                                   #
 # ---------------------------------------------------------------------------- #
 
+
 # --------------------------------- PID Class -------------------------------- #
 class PID_controller:
     def __init__(self, kp, ki, kd):
@@ -47,7 +48,11 @@ class PID_controller:
         self.integral += error
         self.derivative = error - self.last_error
         self.last_error = error
-        self.output = self.kp * error + self.ki * self.integral + self.kd * self.derivative / (time.time() - self.last_time)
+        self.output = (
+            self.kp * error
+            + self.ki * self.integral
+            + self.kd * self.derivative / (time.time() - self.last_time)
+        )
         self.last_time = time.time()
 
     def correction(self):
@@ -60,14 +65,8 @@ class PID_controller:
 
         # Return correction speed
         return self.output
-        
 
-        
-        
 
-        
-        
-    
 # ---------------------------------------------------------------------------- #
 #                                   Functions                                  #
 # ---------------------------------------------------------------------------- #
@@ -77,9 +76,24 @@ def log():
         # Get the current time in seconds.
         current_time = start_time - time.time()
 
-        #log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
+        # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
         # Write the current time to the file.
-        file.write(f"{current_time}, {line_sensor_left.reflection()}, {line_sensor_right.reflection()},{left_motor.stalled()}, {left_motor.speed()},{right_motor.stalled()}, {right_motor.speed()}\n")
+        file.write(
+            str(current_time)
+            + ", "
+            + str(line_sensor_left.reflection())
+            + ", "
+            + str(line_sensor_right.reflection())
+            + ", "
+            + str(left_motor.stalled())
+            + ", "
+            + str(left_motor.speed())
+            + ", "
+            + str(right_motor.stalled())
+            + ", "
+            + str(right_motor.speed())
+            + "\n"
+        )
 
 
 # ---------------------------------------------------------------------------- #
@@ -95,8 +109,6 @@ right_motor = Motor(Port.C)
 left_motor = Motor(Port.B)
 
 
-
-
 # Initialize the color sensor.
 line_sensor_left = ColorSensor(Port.S4)
 line_sensor_right = ColorSensor(Port.S1)
@@ -108,10 +120,9 @@ start_time = time.time()
 # Filename
 filename = "data.csv"
 with open(filename, "a") as file:
-    file.write("Time, Left_sensor, Right_sensor,Left_motor_stall, Left_motor,Left_motor_stall, Right_motor\n")
-
-
-
+    file.write(
+        "Time, Left_sensor, Right_sensor,Left_motor_stall, Left_motor,Left_motor_stall, Right_motor\n"
+    )
 
 
 # ---------------------------- PID Initialization ---------------------------- #
@@ -119,8 +130,6 @@ with open(filename, "a") as file:
 KP = 1
 KI = 0
 KD = 0
-
-
 
 
 PID = PID_controller(1, 0, 0)
@@ -137,11 +146,10 @@ DRIVE_SPEED = 100
 base_speed = 100
 
 
-
 # -------------------------------- While Loop -------------------------------- #
 # Start following the line endlessly.
 while True:
-   
+
     # Initialize the error.
     error = line_sensor_left.reflection() - line_sensor_right.reflection()
 
@@ -157,6 +165,6 @@ while True:
 
     # Log the data.
     log()
-    
+
     # You can wait for a short time or do other things in this loop.
     wait(50)
