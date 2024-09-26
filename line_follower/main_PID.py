@@ -154,9 +154,8 @@ while True:
     # Set the motor speeds.
     left_motor.run(base_speed - correction_speed)
     right_motor.run(base_speed + correction_speed)
-
-    # Log the data.
-    log()
     
+
+    log()
     # You can wait for a short time or do other things in this loop.
     wait(50)
