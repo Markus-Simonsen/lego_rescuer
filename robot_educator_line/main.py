@@ -63,7 +63,7 @@ while True:
     ):
         left_motor.dc(-25)
         right_motor.dc(-25)
-        wait(500)
+        wait(5 < 00)
     # if both sensors does not see anything
     else:
         left_motor.dc(25)
