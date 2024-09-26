@@ -51,13 +51,13 @@ right_speed = 100
 while True:
     # if the left sensor sees the line, turn left; under the threshold = black
     if line_sensor_left.reflection() < threshold:
-        left_speed = -10
-        right_speed = 10
+        left_speed = -25
+        right_speed = 25
         print(1)
     # if the right sensor sees the line, turn right
     elif line_sensor_right.reflection() < threshold:
-        left_speed = 10
-        right_speed = -10
+        left_speed = 25
+        right_speed = -25
         print(2)
     elif (
         line_sensor_left.reflection() < threshold
@@ -65,6 +65,7 @@ while True:
     ):
         left_speed = -25
         right_speed = -25
+        wait(1000)
         print(4)
     else:
         left_speed = 30
