@@ -4,6 +4,8 @@ from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
 
+from pynput import keyboard
+
 
 class Rescuer:
     # Initialize the EV3 brick.
@@ -24,7 +26,62 @@ class Rescuer:
     WHITE = 85
     threshold = (BLACK + WHITE) / 2
 
-    def follow_line:
+    left_speed = 100
+    right_speed = 100
+
+    def move_forward():
+        left_motor.dc(left_speed)
+        right_motor.dc(right_speed)
+
+    def move_backward():
+        left_motor.dc(-left_speed)
+        right_motor.dc(-right_speed)
+
+    def move_left():
+        left_motor.dc(-left_speed)
+        right_motor.dc(right_speed)
+
+    def move_right():
+        left_motor.dc(left_speed)
+        right_motor.dc(-right_speed)
+
+    def stop():
+        left_motor.dc(0)
+        right_motor.dc(0)
+
+    def on_press(key):
+        try:
+            if key == keyboard.Key.up:
+                move_forward()
+            elif key == keyboard.Key.down:
+                move_backward()
+            elif key == keyboard.Key.left:
+                move_left()
+            elif key == keyboard.Key.right:
+                move_right()
+            elif key == keyboard.Key.comma:
+                left_speed -= 10
+                right_speed -= 10
+            elif key == keyboard.Key.period:
+                left_speed += 10
+                right_speed += 10
+
+        except AttributeError:
+            pass
+
+    def on_release(key):
+        stop()
+        if key == keyboard.Key.esc:
+            return False
+
+    def manual_control():
+        with keyboard.Listener(
+            on_press=on_press,
+            on_release=on_release,
+        ) as listener:
+            listener.join()
+
+    def follow_line():
 
         left_speed = 100
         right_speed = 100
