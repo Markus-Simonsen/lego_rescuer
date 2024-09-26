@@ -20,6 +20,7 @@ from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
 import time
 
+
 # ---------------------------------------------------------------------------- #
 #                                    Classes                                   #
 # ---------------------------------------------------------------------------- #
@@ -36,28 +37,36 @@ class PID_controller:
         self.integral = 0
         self.derivative = 0
         self.last_error = 0
+        self.last_time = time.time()
 
         # Initialize the maximum speed.
         self.max_speed = 100
-        self.velocity = 0
+        self.output = 0
 
     def update(self, error):
         self.integral += error
         self.derivative = error - self.last_error
         self.last_error = error
-        self.velocity = self.kp * error + self.ki * self.integral + self.kd * self.derivative
+        self.output = self.kp * error + self.ki * self.integral + self.kd * self.derivative / (time.time() - self.last_time)
+        self.last_time = time.time()
 
-    def left_speed(self):
-        if self.velocity > self.max_speed:
-            return self.max_speed
-        else:
-            return self.velocity
+    def correction(self):
+
+        # Clip the velocity to the maximum speed.
+        if self.output > self.max_speed:
+            self.output = self.max_speed
+        elif self.output < -self.max_speed:
+            self.output = -self.max_speed
+
+        # Return correction speed
+        return self.output
         
-    def right_speed(self):
-        if self.velocity > self.max_speed:
-            return self.max_speed
-        else:
-            return self.velocity
+
+        
+        
+
+        
+        
     
 # ---------------------------------------------------------------------------- #
 #                                   Functions                                  #
@@ -111,6 +120,9 @@ KP = 1
 KI = 0
 KD = 0
 
+
+
+
 PID = PID_controller(1, 0, 0)
 
 # ------------------------------ Light threshold ----------------------------- #
@@ -122,16 +134,12 @@ threshold = (BLACK + WHITE) / 2
 # # Set the drive speed at 100 millimeters per second.
 DRIVE_SPEED = 100
 
+base_speed = 100
 
 
-# # For example, if the light value deviates from the threshold by 10, the robot
-# steers at 10*1.2 = 12 degrees per second.
-left_speed = 100
-right_speed = 100
 
-# ev3.speaker.play_file("/music.wav")
-
-# # Start following the line endlessly.
+# -------------------------------- While Loop -------------------------------- #
+# Start following the line endlessly.
 while True:
    
     # Initialize the error.
@@ -139,8 +147,16 @@ while True:
 
     # Update the PID controller.
     PID.update(error)
-    # Set the motor speeds.
-    left_motor.run()
 
+    # Correction speed
+    correction_speed = PID.correction()
+
+    # Set the motor speeds.
+    left_motor.run(base_speed - correction_speed)
+    right_motor.run(base_speed + correction_speed)
+
+    # Log the data.
+    log()
+    
     # You can wait for a short time or do other things in this loop.
     wait(50)
