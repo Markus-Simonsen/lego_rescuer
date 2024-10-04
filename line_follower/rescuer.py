@@ -49,6 +49,9 @@ class Rescuer:
         left_motor.dc(0)
         right_motor.dc(0)
 
+    def grip():
+        gripper_motor.run_angle(10000000, 90)
+
     def on_press(key):
         try:
             if key == keyboard.Key.up:
