@@ -11,6 +11,6 @@ def main():
 
     # Initialize the motors.
     gripper_motor = Motor(Port.A)
-    gripper_motor.run_angle(100000000, 90)
+    gripper_motor.run_angle(100, -90)
     while 1:
         print(gripper_motor.angle())
