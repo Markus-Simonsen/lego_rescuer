@@ -4,7 +4,7 @@ from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
 
-from pynput import keyboard
+import PID as pid
 
 
 class Rescuer:
@@ -12,102 +12,66 @@ class Rescuer:
     ev3 = EV3Brick()
 
     # Initialize the motors.
+    right_motor = Motor(Port.C)
+    left_motor = Motor(Port.B)
     gripper_motor = Motor(Port.A)
-    right_motor = Motor(Port.B)
-    left_motor = Motor(Port.C)
 
-    # Sensors
-    color_sensor_left = ColorSensor(Port.S2)
-    color_sensor_right = ColorSensor(Port.S3)
-    ultrasound = UltrasonicSensor(Port.S4)
+    # Initialize the color sensor.
+    line_sensor_left = ColorSensor(Port.S4)
+    line_sensor_right = ColorSensor(Port.S1)
+    light_sensor = LightSensor(Port.S3)
+    touch_sensor = TouchSensor(Port.S2)
 
-    # Calculate the light threshold. Choose values based on your measurements.
-    BLACK = 20
-    WHITE = 85
-    threshold = (BLACK + WHITE) / 2
+    # ---------------------------- PID Initialization ---------------------------- #
+    # Initialize the PID controller.
+    KP = 30
+    KI = 0
+    KD = 2
 
-    left_speed = 100
-    right_speed = 100
+    # # Set the drive speed at 100 millimeters per second.
+    max_speed = 150
+    base_speed = 90
 
-    def move_forward():
-        left_motor.dc(left_speed)
-        right_motor.dc(right_speed)
+    robot_pid_controller = pid.PID_controller(
+        KP,
+        KI,
+        KD,
+        base_speed,
+        max_speed,
+        line_sensor_left,
+        line_sensor_right,
+        left_motor,
+        right_motor,
+    )
 
-    def move_backward():
-        left_motor.dc(-left_speed)
-        right_motor.dc(-right_speed)
+    def activate_gripper(self):
+        while self.touch_sensor.pressed() == False:
+            self.left_motor.run(-self.base_speed)
+            self.right_motor.run(-self.base_speed)
+        self.left_motor.stop()
+        self.right_motor.stop()
+        self.gripper_motor.run_angle(100, -90)
 
-    def move_left():
-        left_motor.dc(-left_speed)
-        right_motor.dc(right_speed)
+    def do_180(self):
+        self.left_motor.run(self.base_speed)
+        self.right_motor.run(-self.base_speed)
+        wait(1000)
 
-    def move_right():
-        left_motor.dc(left_speed)
-        right_motor.dc(-right_speed)
+    def grip_can(self):
+        self.left_motor.run(-self.base_speed)
+        self.right_motor.run(-self.base_speed)
+        wait(1000)
+        self.do_180()
+        self.activate_gripper()
 
-    def stop():
-        left_motor.dc(0)
-        right_motor.dc(0)
-
-    def grip():
-        gripper_motor.run_angle(10000000, 90)
-
-    def on_press(key):
-        try:
-            if key == keyboard.Key.up:
-                move_forward()
-            elif key == keyboard.Key.down:
-                move_backward()
-            elif key == keyboard.Key.left:
-                move_left()
-            elif key == keyboard.Key.right:
-                move_right()
-            elif key == keyboard.Key.comma:
-                left_speed -= 10
-                right_speed -= 10
-            elif key == keyboard.Key.period:
-                left_speed += 10
-                right_speed += 10
-
-        except AttributeError:
-            pass
-
-    def on_release(key):
-        stop()
-        if key == keyboard.Key.esc:
-            return False
-
-    def manual_control():
-        with keyboard.Listener(
-            on_press=on_press,
-            on_release=on_release,
-        ) as listener:
-            listener.join()
-
-    def follow_line():
-
-        left_speed = 100
-        right_speed = 100
-
-        # Start following the line endlessly.
-        while True:
-            # if the left sensor sees the line, turn left
-            if color_sensor_left.reflection() < threshold:
-                left_speed = 0
-            # if the right sensor sees the line, turn right
-            elif color_sensor_right.reflection() < threshold:
-                right_speed = 0
-            else:
-                left_speed = 100
-                right_speed = 100
-
-            print(
-                "left: "
-                + color_sensor_left.reflection()
-                + "right: "
-                + color_sensor_right.reflection()
-            )
-
-            # Set the motor speeds.
-            left_motor.dc(left_speed)
-            right_motor.dc(right_speed)
+    def behaviour_tree(self):
+        # TODO: maybe implement state machine
+        while (
+            self.light_sensor.reflection() < 50
+            and self.line_sensor_left.reflection() < 50
+            and self.line_sensor_right.reflection() < 50
+        ):
+            self.robot_pid_controller.run()
+        self.robot_pid_controller.run()
+        self.do_180()
+        # self.robot_pid_controller.run()
