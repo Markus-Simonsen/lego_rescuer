@@ -13,7 +13,7 @@ https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#ro
 # ---------------------------------------------------------------------------- #
 #                                    Import                                    #
 # ---------------------------------------------------------------------------- #
-from pybricks.ev3devices import Motor, ColorSensor
+from pybricks.ev3devices import Motor, ColorSensor, TouchSensor
 from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
@@ -208,7 +208,7 @@ PID = PID_controller(KP,KI,KD,base_speed,max_speed,line_sensor_left,line_sensor_
 while True:
 
     # PID controller
-    #PID.run()
+    PID.run()
     # Print light sensor values
     print("Left: ",light_sensor.reflection())
 

@@ -20,7 +20,6 @@ https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#ro
 # from pybricks.hubs import EV3Brick
 # import time
 import main_sand
-
-import PID
+#import PID
 
 main_sand.main()
