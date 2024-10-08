@@ -10,131 +10,26 @@ Download: https://education.lego.com/en-us/support/mindstorms-ev3/python-for-ev3
 Building instructions can be found at:
 https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#robot
 """
-# ---------------------------------------------------------------------------- #
-#                                    Import                                    #
-# ---------------------------------------------------------------------------- #
+
 from pybricks.ev3devices import Motor, ColorSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
-import time
 
+import PID
 
-# ---------------------------------------------------------------------------- #
-#                                    Classes                                   #
-# ---------------------------------------------------------------------------- #
-
-
-# --------------------------------- PID Class -------------------------------- #
-class PID_controller:
-    def __init__(self, kp, ki, kd):
-        # Set PID values.
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-
-        # Initialize the PID variables.
-        self.integral = 0
-        self.derivative = 0
-        self.last_error = 0
-        self.last_time = time.time()
-
-        # Initialize the maximum speed.
-        self.max_speed = 100
-        self.output = 0
-
-    def update(self, error):
-        self.integral += error
-        self.derivative = error - self.last_error
-        self.last_error = error
-        self.output = (
-            self.kp * error
-            + self.ki * self.integral
-            + self.kd * self.derivative / (time.time() - self.last_time)
-        )
-        self.last_time = time.time()
-
-    def correction(self):
-
-        # Clip the velocity to the maximum speed.
-        if self.output > self.max_speed:
-            self.output = self.max_speed
-        elif self.output < -self.max_speed:
-            self.output = -self.max_speed
-
-        # Return correction speed
-        return self.output
-
-
-# ---------------------------------------------------------------------------- #
-#                                   Functions                                  #
-# ---------------------------------------------------------------------------- #
-# Logger function for light sensor and motor values in .csv file
-def log():
-    with open(filename, "a") as file:
-        # Get the current time in seconds.
-        current_time = start_time - time.time()
-
-        # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
-        # Write the current time to the file.
-        file.write(
-            str(current_time)
-            + ", "
-            + str(line_sensor_left.reflection())
-            + ", "
-            + str(line_sensor_right.reflection())
-            + ", "
-            + str(left_motor.stalled())
-            + ", "
-            + str(left_motor.speed())
-            + ", "
-            + str(right_motor.stalled())
-            + ", "
-            + str(right_motor.speed())
-            + "\n"
-        )
-
-
-# ---------------------------------------------------------------------------- #
-#                                     Main                                     #
-# ---------------------------------------------------------------------------- #
-
-# ------------------------ Initialize brick and motors ----------------------- #
-# Initialize the EV3 brick.
+# # Initialize the EV3 brick.
 ev3 = EV3Brick()
 
-# Initialize the motors.
+# # Initialize the motors.
 right_motor = Motor(Port.C)
 left_motor = Motor(Port.B)
-
 
 # Initialize the color sensor.
 line_sensor_left = ColorSensor(Port.S4)
 line_sensor_right = ColorSensor(Port.S1)
 
-# ---------------------------------- Logger ---------------------------------- #
-# Start timer
-start_time = time.time()
-
-# Filename
-filename = "data.csv"
-with open(filename, "a") as file:
-    file.write(
-        "Time, Left_sensor, Right_sensor,Left_motor_stall, Left_motor,Left_motor_stall, Right_motor\n"
-    )
-
-
-# ---------------------------- PID Initialization ---------------------------- #
-# Initialize the PID controller.
-KP = 1
-KI = 0
-KD = 0
-
-
-PID = PID_controller(1, 0, 0)
-
-# ------------------------------ Light threshold ----------------------------- #
 # Calculate the light threshold. Choose values based on your measurements.
 BLACK = 20
 WHITE = 85
@@ -143,38 +38,54 @@ threshold = (BLACK + WHITE) / 2
 # # Set the drive speed at 100 millimeters per second.
 DRIVE_SPEED = 100
 
-base_speed = 100
+# # Set the gain of the proportional line controller. This means that for every
+# # percentage point of light deviating from the threshold, we set the turn
+# # rate of the drivebase to 1.2 degrees per second.
 
+# # For example, if the light value deviates from the threshold by 10, the robot
+# steers at 10*1.2 = 12 degrees per second.
+left_speed = 100
+right_speed = 100
 
-# -------------------------------- While Loop -------------------------------- #
-# Start following the line endlessly.
+# ev3.speaker.play_file("/music.wav")
+
+# # Start following the line endlessly.
 while True:
-    button = ev3.buttons.pressed()
-    try:
-        if button[0] == "up":
-            KP += 0.2
-            print(KP)
-        elif button[0] == "down":
-            KP -= 0.2
-            print(KP)
-    except:
-        pass
+    # if the left sensor sees the line, turn left; under the threshold = black
+    if line_sensor_left.reflection() < threshold:
+        left_speed = -25
+        right_speed = 25
+        print(1)
+    # if the right sensor sees the line, turn right
+    elif line_sensor_right.reflection() < threshold:
+        left_speed = 25
+        right_speed = -25
+        print(2)
+    elif (
+        line_sensor_left.reflection() < threshold
+        and line_sensor_right.reflection() < threshold
+    ):
+        left_speed = -25
+        right_speed = -25
+        wait(1000)
+        print(4)
+    else:
+        left_speed = 30
+        right_speed = 30
+        print(3)
 
-    # Initialize the error.
-    error = line_sensor_left.reflection() - line_sensor_right.reflection()
-
-    # Update the PID controller.
-    PID.update(error)
-
-    # Correction speed
-    correction_speed = PID.correction()
+    ev3.screen.draw_text(50, 500, line_sensor_left.reflection())
+    ev3.screen.draw_text(2, 100, line_sensor_right.reflection())
+    print(
+        "left: "
+        + str(line_sensor_left.reflection())
+        + "right: "
+        + str(line_sensor_right.reflection())
+    )
 
     # Set the motor speeds.
-    left_motor.run(base_speed - correction_speed)
-    right_motor.run(base_speed + correction_speed)
-
-    # Log the data.
-    log()
+    left_motor.dc(left_speed)
+    right_motor.dc(right_speed)
 
     # You can wait for a short time or do other things in this loop.
     wait(50)
