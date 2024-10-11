@@ -1,5 +1,7 @@
 #!/usr/bin/env pybricks-micropython
-
+# Question 1: Can we assume that the tomato can will be placed directly in front of the end of the line?
+# Question 2: Ramp management, do we just film one take going up and one take going down?
+# Question 3: Angle of can?
 """
 Example LEGO MINDSTORMS EV3 Robot Educator Color Sensor Down Program
 ----------------------------------------------------------------------
@@ -13,7 +15,7 @@ https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#ro
 # ---------------------------------------------------------------------------- #
 #                                    Import                                    #
 # ---------------------------------------------------------------------------- #
-from pybricks.ev3devices import Motor, ColorSensor
+from pybricks.ev3devices import Motor, ColorSensor, TouchSensor
 from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
