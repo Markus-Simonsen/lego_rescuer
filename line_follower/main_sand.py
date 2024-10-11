@@ -5,8 +5,6 @@ from pybricks.tools import wait
 from pybricks.hubs import EV3Brick
 
 
-
-
 def turn_180(left_motor, right_motor):
     # Turn 180 degrees
     angles = 0
@@ -28,6 +26,7 @@ def turn_180(left_motor, right_motor):
     left_motor.run(0)
     right_motor.run(0)
 
+
 def main():
 
     ev3 = EV3Brick()
@@ -37,18 +36,15 @@ def main():
     left_motor = Motor(Port.B)
     right_motor = Motor(Port.C)
     touch_sensor = TouchSensor(Port.S2)
-    #gripper_motor.run_angle(100, 90)
+    # gripper_motor.run_angle(100, 90)
 
-   
     left_motor.run(100)
     right_motor.run(100)
     wait(1000)
     turn_180(left_motor, right_motor)
     motor_speed = -500
-    
 
     tomato_gripped = False
-
 
     print("Press the touch sensor to close the gripper.")
     while True:
@@ -63,6 +59,7 @@ def main():
         # Run both motors at 50
         left_motor.run(motor_speed)
         right_motor.run(motor_speed)
+
 
 # Run main
 if __name__ == "__main__":
