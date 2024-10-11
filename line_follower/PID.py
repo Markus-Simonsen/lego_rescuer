@@ -18,7 +18,6 @@ https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#ro
 from pybricks.ev3devices import Motor, ColorSensor, TouchSensor
 from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
-from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
 import time
@@ -40,6 +39,7 @@ class PID_controller:
         max_speed,
         line_sensor_left,
         line_sensor_right,
+        light_sensor,
         left_motor,
         right_motor,
     ):
@@ -54,10 +54,17 @@ class PID_controller:
         # Thresholds
         self.white_threshold = 15
         self.black_threshold = 6
+        self.light_threshold = 35
+
+        # Triple light
+        self.triple_light_list = [0]
+        self.triple_white = False
+        self.triple_light_count = 0
 
         # Sensors
         self.line_sensor_left = line_sensor_left
         self.line_sensor_right = line_sensor_right
+        self.light_sensor = light_sensor
 
         # Motors
         self.left_motor = left_motor
@@ -101,28 +108,31 @@ class PID_controller:
         self.right_speed = self.base_speed - self.output
 
         # Check for sharp turns
+        speed_diff = self.base_speed * 3
         if (
             self.line_sensor_left.reflection() > self.white_threshold
             and self.line_sensor_right.reflection() < self.black_threshold
         ):
-            self.left_speed = self.base_speed * 3
-            self.right_speed = -self.base_speed * 3
+            self.left_speed = speed_diff
+            self.right_speed = -speed_diff
         elif (
             self.line_sensor_left.reflection() < self.black_threshold
             and self.line_sensor_right.reflection() > self.white_threshold
         ):
-            self.left_speed = -self.base_speed * 3
-            self.right_speed = self.base_speed * 3
+            self.left_speed = -speed_diff
+            self.right_speed = speed_diff
 
         # Update the time.
         self.last_time = time.time()
 
+    # def incline(self):
+
     def print_values(self):
         # Print time
         # Clear terminal
-
+        # print("\033[9A", end="")
         print("--------------------")
-        print("time: ", time.time() - self.last_time)
+        # print("time: ", time.time())
         # Print error
         print("left: ", self.line_sensor_left.reflection() + self.calibration)
         print("right: ", self.line_sensor_right.reflection())
@@ -141,8 +151,11 @@ class PID_controller:
         # Update the PID controller.
         self.update(error)
 
+        # Log tripple light
+        # self.log_triple_light()
+
         # Print values
-        self.print_values()
+        # self.print_values()
 
         # Set the motor speeds.
         self.left_motor.run(self.left_speed)
@@ -169,6 +182,10 @@ class PID_controller:
                 + str(self.right_motor.stalled())
                 + ", "
                 + str(self.right_motor.speed())
+                + ", "
+                + str(self.light_sensor.reflection())
+                + ", "
+                + str(self.triple_light_list)
                 + "\n"
             )
 
@@ -211,19 +228,15 @@ def main():
 
     # ---------------------------- PID Initialization ---------------------------- #
     # Initialize the PID controller.
-    KP = 30
+    KP = 40
     KI = 0
-    KD = 2
+    KD = 5
 
     # ------------------------------ Light threshold ----------------------------- #
-    # Calculate the light threshold. Choose values based on your measurements.
-    BLACK = 20
-    WHITE = 85
-    threshold = (BLACK + WHITE) / 2
 
     # # Set the drive speed at 100 millimeters per second.
-    max_speed = 150
-    base_speed = 90
+    max_speed = 500
+    base_speed = 130
 
     my_PID = PID_controller(
         KP,
@@ -233,23 +246,25 @@ def main():
         max_speed,
         line_sensor_left,
         line_sensor_right,
+        light_sensor,
         left_motor,
         right_motor,
     )
     # -------------------------------- While Loop -------------------------------- #
     # Start following the line endlessly.
+    light = []
     while True:
 
         # PID controller
         my_PID.run()
+
         # Print light sensor values
-        print("LIGHT: ", light_sensor.reflection())
+        # light.append(light_sensor.reflection())
+        # Average light sensor values
+        # print("AVERAGE: ", sum(light) / len(light))
 
         # Log the data.
         my_PID.log(filename, start_time)
-
-        # You can wait for a short time or do other things in this loop.
-        wait(50)
 
 
 if __name__ == "__main__":
