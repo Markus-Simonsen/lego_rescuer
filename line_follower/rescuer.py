@@ -1,4 +1,5 @@
-from pybricks.ev3devices import Motor, ColorSensor
+from pybricks.ev3devices import Motor, ColorSensor, TouchSensor
+from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
@@ -12,15 +13,15 @@ class Rescuer:
     ev3 = EV3Brick()
 
     # Initialize the motors.
-    right_motor = Motor(Port.C)
-    left_motor = Motor(Port.B)
     gripper_motor = Motor(Port.A)
+    left_motor = Motor(Port.B)
+    right_motor = Motor(Port.C)
 
     # Initialize the color sensor.
-    line_sensor_left = ColorSensor(Port.S4)
     line_sensor_right = ColorSensor(Port.S1)
-    light_sensor = LightSensor(Port.S3)
     touch_sensor = TouchSensor(Port.S2)
+    light_sensor = LightSensor(Port.S3)
+    line_sensor_left = ColorSensor(Port.S4)
 
     # ---------------------------- PID Initialization ---------------------------- #
     # Initialize the PID controller.
@@ -52,17 +53,44 @@ class Rescuer:
         self.right_motor.stop()
         self.gripper_motor.run_angle(100, -90)
 
-    def do_180(self):
-        self.left_motor.run(self.base_speed)
-        self.right_motor.run(-self.base_speed)
-        wait(1000)
+    def turn_180(self):
+        # Turn 180 degrees
+        angles = 0
+
+        # Turn speed
+        speed = 100
+
+        # Total angle
+        degrees = 545
+
+        # Run the motors
+        while angles < degrees:
+            self.left_motor.run(speed)
+            self.right_motor.run(-speed)
+            angles = self.left_motor.angle()
+            print(angles)
+
+        # Stop the motors
+        self.left_motor.run(0)
+        self.right_motor.run(0)
 
     def grip_can(self):
-        self.left_motor.run(-self.base_speed)
-        self.right_motor.run(-self.base_speed)
-        wait(1000)
-        self.do_180()
-        self.activate_gripper()
+
+        # Gripper
+        grip_angle = -120
+        grip_speed = 100
+
+        while True:
+            self.left_motor.run(- self.base_speed)  # Go reverse
+            self.right_motor.run(- self.base_speed)  # Go reverse
+
+            if self.touch_sensor.pressed():  # Touch sensor pressed
+                self.left_motor.run(0)  # Stop the motors
+                self.right_motor.run(0)  # Stop the motors
+                self.gripper_motor.run_angle(
+                    grip_speed, grip_angle)  # Close the gripper
+
+                return True
 
     def behaviour_tree(self):
         # TODO: maybe implement state machine
@@ -73,5 +101,5 @@ class Rescuer:
         ):
             self.robot_pid_controller.run()
         self.robot_pid_controller.run()
-        self.do_180()
+        self.turn_180()
         # self.robot_pid_controller.run()
