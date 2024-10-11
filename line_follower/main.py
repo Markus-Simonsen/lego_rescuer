@@ -19,8 +19,13 @@ https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#ro
 # from pybricks.robotics import DriveBase
 # from pybricks.hubs import EV3Brick
 # import time
-import main_sand
 
-import PID
 
-main_sand.main()
+# TODO: 180
+# TODO: touch sensor
+# TODO: gripper
+# TODO: light sensor
+
+import rescuer as jerry
+
+jerry.behaviour_tree()
