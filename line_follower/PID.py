@@ -83,6 +83,47 @@ class PID_controller:
         self.right_speed = 50
         self.output = 0
 
+        # Initialize the logger
+
+        self.log_i = 0
+        self.filename = "log.csv"
+        self.start_time = time.time()
+        with open(self.filename, "a") as file:
+            file.write(
+                "Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
+            )
+
+    def log(self):
+        with open(self.filename, "a") as file:
+            # Get the current time in seconds.
+            current_time = int((time.time() - self.start_time)*100)/100
+
+            # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
+            # Write the current time to the file.
+            file.write(
+                str(self.log_i)
+                + ", "
+                + str(current_time)
+                + ", "
+                + str(self.line_sensor_left.reflection())
+                + ", "
+                + str(self.light_sensor.reflection())
+                + ", "
+                + str(self.line_sensor_right.reflection())
+                + ", "
+                + str(self.triple_light_count)
+                + ", "
+                + str(self.left_motor.speed())
+                + ", "
+                + str(self.right_motor.speed())
+                + ", "
+                + str(self.left_motor.angle())
+                + ", "
+                + str(self.right_motor.angle())
+                + "\n"
+            )
+            self.log_i += 1
+
     def update(self, error):
 
         # Update the integral and derivative.
@@ -140,7 +181,8 @@ class PID_controller:
         print("output: ", self.output, end="\n")
 
     def run(self):
-
+        print("[ANGLES] ", self.left_motor.angle(),
+              self.right_motor.angle(), end="\r")
         # Initialize the error.
         error = (
             self.line_sensor_left.reflection()
@@ -161,33 +203,8 @@ class PID_controller:
         self.left_motor.run(self.left_speed)
         self.right_motor.run(self.right_speed)
 
-    def log(self, filename, start_time=time.time()):
-        with open(filename, "a") as file:
-            # Get the current time in seconds.
-            current_time = start_time - time.time()
-
-            # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
-            # Write the current time to the file.
-            file.write(
-                str(current_time)
-                + ", "
-                + str(self.line_sensor_left.reflection())
-                + ", "
-                + str(self.line_sensor_right.reflection())
-                + ", "
-                + str(self.left_motor.stalled())
-                + ", "
-                + str(self.left_motor.speed())
-                + ", "
-                + str(self.right_motor.stalled())
-                + ", "
-                + str(self.right_motor.speed())
-                + ", "
-                + str(self.light_sensor.reflection())
-                + ", "
-                + str(self.triple_light_list)
-                + "\n"
-            )
+        # Log the data.
+        self.log()
 
 
 # ---------------------------------------------------------------------------- #
@@ -216,15 +233,12 @@ def main():
     light_sensor = LightSensor(Port.S3)
 
     # ---------------------------------- Logger ---------------------------------- #
-    # Start timer
-    start_time = time.time()
+    def init_logger(filename="data.csv"):
 
-    # Filename
-    filename = "data.csv"
-    with open(filename, "a") as file:
-        file.write(
-            "Time, Left_sensor, Right_sensor,Left_motor_stall, Left_motor,Left_motor_stall, Right_motor\n"
-        )
+        with open(filename, "a") as file:
+            file.write(
+                "Time, Left_sensor, Right_sensor,Left_motor_stall, Left_motor,Left_motor_stall, Right_motor\n"
+            )
 
     # ---------------------------- PID Initialization ---------------------------- #
     # Initialize the PID controller.
@@ -264,7 +278,6 @@ def main():
         # print("AVERAGE: ", sum(light) / len(light))
 
         # Log the data.
-        my_PID.log(filename, start_time)
 
 
 if __name__ == "__main__":

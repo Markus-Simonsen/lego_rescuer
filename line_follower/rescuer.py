@@ -4,6 +4,7 @@ from pybricks.parameters import Port
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
+import time
 
 import PID as PID
 
@@ -24,14 +25,21 @@ class Rescuer:
     line_sensor_left = ColorSensor(Port.S4)
 
     # Triple Light
-    # Thresholds
     white_threshold = 18
     light_threshold = 48
 
-    # Triple light
     triple_light_list = [0]
     triple_white = False
     triple_light_count = 0
+
+    # Initialize the logger
+    log_i = 0
+    filename = "log.csv"
+    start_time = time.time()
+    with open(filename, "a") as file:
+        file.write(
+            "Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
+        )
 
     # ---------------------------- PID Initialization ---------------------------- #
     # Initialize the PID controller.
@@ -57,6 +65,40 @@ class Rescuer:
         right_motor,
     )
 
+
+
+    def NOT(self):
+        with open(self.filename, "a") as file:
+            # Get the current time in seconds.
+            current_time = int((time.time() - self.start_time)*100)/100
+            log_i = self.log_i
+            # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
+            # Write the current time to the file.
+            file.write(
+                str(log_i)
+                + ", "
+                + str(current_time)
+                + ", "
+                + str(self.line_sensor_left.reflection())
+                + ", "
+                + str(self.line_sensor_right.reflection())
+                + ", "
+                + str(self.left_motor.stalled())
+                + ", "
+                + str(self.left_motor.speed())
+                + ", "
+                + str(self.right_motor.stalled())
+                + ", "
+                + str(self.right_motor.speed())
+                + ", "
+                + str(self.light_sensor.reflection())
+                + ", "
+                + str(self.triple_light_list)
+                + "\n"
+            )
+            self.log_i += 1
+
+
     def activate_gripper(self):
         while self.touch_sensor.pressed() == False:
             self.left_motor.run(-self.base_speed)
@@ -71,7 +113,7 @@ class Rescuer:
         if (self.light_sensor.reflection() > self.light_threshold and
             self.line_sensor_right.reflection() > self.white_threshold and
                 self.line_sensor_left.reflection() > self.white_threshold):
-            print("[TRIPLE LIGHT] ", self.triple_light_list)
+            # print("[TRIPLE LIGHT] ", self.triple_light_list)
             if self.triple_white == False:  # If not already white
                 self.triple_white = True
                 self.triple_light_list.append(1)
@@ -82,8 +124,6 @@ class Rescuer:
 
     def triple_light(self, max_count=15):
         # Print threshold
-        print("Threshold: ", self.light_threshold)
-        print("White Threshold: ", self.white_threshold)
         # Check for triple light
         if (self.light_sensor.reflection() > self.light_threshold and
             self.line_sensor_right.reflection() > self.white_threshold and
@@ -108,8 +148,15 @@ class Rescuer:
         else:
             return False
 
-    def turn_180(self):
+    def abs(self, x):
+        if x < 0:
+            return -x
+        return x
+
+    def turn_180(self, degrees=472):
         # Turn 180 degrees
+        left_start = self.left_motor.angle()
+        right_start = self.right_motor.angle()
         angles = 0
         self.left_motor.run(0)
         self.right_motor.run(0)
@@ -117,19 +164,21 @@ class Rescuer:
         speed = 100
 
         # Total angle
-        degrees = 545
+        degrees_180 = angles + degrees
         print("[TURN 180]")
         # Run the motors
-        while angles < degrees:
+        while angles < degrees_180:
 
             self.left_motor.run(speed)
             self.right_motor.run(-speed)
-            angles = self.left_motor.angle()  # + self.right_motor.angle()) / 2
-            print(angles)
+            angles = (self.left_motor.angle()-left_start +
+                      right_start-self.right_motor.angle()) / 2
+            # print(angles)
 
         # Stop the motors
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.run(-speed)
+        self.right_motor.run(-speed)
+        wait(1000)
 
     def grip_can(self):
 
@@ -163,16 +212,18 @@ class Rescuer:
         # TODO: maybe implement state machine
         while (not self.triple_light(35)):
             self.robot_pid_controller.run()
-            print("Left: ", self.line_sensor_left.reflection(),
-                  "Middle: ", self.light_sensor.reflection(),
-                  "Right: ", self.line_sensor_right.reflection(), end="\r")
+            # Log
+            # print("Left: ", self.line_sensor_left.reflection(),
+            #       "Middle: ", self.light_sensor.reflection(),
+            #       "Right: ", self.line_sensor_right.reflection(), end="\r")
         # Reverse
         self.left_motor.run(-self.base_speed/2)
         self.right_motor.run(-self.base_speed/2)
-        wait(200)
+        wait(1000)
         self.turn_180()
-        # self.grip_can()
-        # self.robot_pid_controller.run()
+        self.grip_can()
+        while True:
+            self.robot_pid_controller.run()
 
 
 def main():
