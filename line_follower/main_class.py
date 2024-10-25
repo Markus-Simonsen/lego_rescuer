@@ -22,9 +22,6 @@ import rescuer
 robot = rescuer.Rescuer()
 
 
-while True:
-    robot.manual_control()
-
 # # Start following the line endlessly.
 while True:
     # if the left sensor sees the line, turn left; under the threshold = black

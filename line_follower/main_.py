@@ -29,15 +29,19 @@ from rescuer import Rescuer
 # ---------------------------------------------------------------------------- #
 #                                    Classes                                   #
 # ---------------------------------------------------------------------------- #
+# TODO: Grip straight
+# TODO: Fix decline with nose
 
 
 def main():
 
     jerry = Rescuer()
+    # jerry.check_turn_calibration(degrees_180=494)
+
     while True:
+        # jerry.calibrate_line_follower(samples=5000, stop=False)
         jerry.behaviour_tree()
         print("hej")
-
 
 
 if __name__ == "__main__":

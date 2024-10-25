@@ -42,6 +42,7 @@ class PID_controller:
         light_sensor,
         left_motor,
         right_motor,
+        line_follower_calibration
     ):
         # Set PID values.
         self.kp = kp
@@ -75,7 +76,7 @@ class PID_controller:
         self.derivative = 0
         self.last_error = 0
         self.last_time = time.time()
-        self.calibration = -1
+        self.calibration = line_follower_calibration
 
         # Initialize the maximum speed.
         self.max_speed = max_speed
@@ -90,7 +91,7 @@ class PID_controller:
         self.start_time = time.time()
         with open(self.filename, "a") as file:
             file.write(
-                "Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
+                "Index, Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
             )
 
     def log(self):
@@ -124,7 +125,15 @@ class PID_controller:
             )
             self.log_i += 1
 
+    def abs(self, x):
+        if x < 0:
+            return -x
+        return x
+
     def update(self, error):
+
+        if abs(error) < 2:
+            error = 0
 
         # Update the integral and derivative.
         self.integral += error
@@ -187,7 +196,7 @@ class PID_controller:
         error = (
             self.line_sensor_left.reflection()
             - self.line_sensor_right.reflection()
-            + self.calibration
+            - self.calibration
         )
 
         # Update the PID controller.
