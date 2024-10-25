@@ -1,4 +1,4 @@
-from pybricks.ev3devices import Motor, ColorSensor, TouchSensor
+from pybricks.ev3devices import Motor, ColorSensor, TouchSensor, UltrasonicSensor
 from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
@@ -20,7 +20,7 @@ class Rescuer:
 
     # Initialize the color sensor.
     line_sensor_right = ColorSensor(Port.S1)
-    touch_sensor = TouchSensor(Port.S2)
+    ultrasonic_sensor = UltrasonicSensor(Port.S2)
     light_sensor = LightSensor(Port.S3)
     line_sensor_left = ColorSensor(Port.S4)
 
@@ -153,6 +153,46 @@ class Rescuer:
             return -x
         return x
 
+    def turn_angle(self, angle):
+        degree_180 = 472
+        angle = degree_180/180*angle
+        #save start angle
+        left_start = self.left_motor.angle()
+        right_start = self.right_motor.angle()
+        angles = 0
+        self.left_motor.run(0)
+        self.right_motor.run(0)
+        # Turn speed
+        speed = 100
+
+        # Total angle
+        degrees = angle
+        print("Turn:", angle)
+
+        if angle > 0:
+            while angles < degrees:
+
+                self.left_motor.run(speed)
+                self.right_motor.run(-speed)
+                # the right motor is negative because it rotates opposite
+                angles = (self.left_motor.angle()-left_start -(
+                          self.right_motor.angle()-right_start)) / 2
+                # print(angles)
+        elif angle < 0:
+            while angles < abs(degrees):
+
+                self.left_motor.run(-speed)
+                self.right_motor.run(speed)
+                # the left motor is negative because it rotates opposite
+                angles = (self.right_motor.angle()-right_start -(
+                          self.left_motor.angle()-left_start)) / 2
+                # print(angles)
+
+        # Stop the motors
+        self.left_motor.run(0)
+        self.right_motor.run(0)
+        wait(1000)
+
     def turn_180(self, degrees=472):
         # Turn 180 degrees
         left_start = self.left_motor.angle()
@@ -180,26 +220,77 @@ class Rescuer:
         self.right_motor.run(-speed)
         wait(1000)
 
+
+    def scan_180(self, degrees=472):
+        # Turn 180 degrees
+        left_start = self.left_motor.angle()
+        right_start = self.right_motor.angle()
+        angles = 0
+        self.left_motor.run(0)
+        self.right_motor.run(0)
+        # Turn speed
+        speed = 50
+
+        # Total angle
+        degrees_180 = angles + degrees
+        print("[TURN 180]")
+        # Run the motors
+        # array to store the readings at each interval of 5 angles in the 180 degree turn
+        angle_readings = []
+        angles_prev = 0
+        while angles < degrees_180:
+
+            self.left_motor.run(speed)
+            self.right_motor.run(-speed)
+            angles_prev = angles
+            angles = (self.left_motor.angle()-left_start +
+                      right_start-self.right_motor.angle()) / 2
+            # store angles readings from the ultrasound sensor
+            if angles % 5 == 0 and angles != angles_prev:
+                angle_readings.append(self.ultrasonic_sensor.distance())
+            # print(angles)
+
+        print(angle_readings)
+
+        # return to the minimum distance reading
+        min_distance = min(angle_readings)
+        print(min_distance)
+        # indices of min value
+        min_indices = [index for index, value in enumerate(angle_readings) if value == min_distance]
+        # find middle index of min indices
+        index = min_indices[len(min_indices)//2]
+        # index of min value from the other end of the list
+        index = len(angle_readings) - index
+        angles = 0
+        left_start = self.left_motor.angle()
+        right_start = self.right_motor.angle()
+        while angles < index*5:
+            self.left_motor.run(-speed)
+            self.right_motor.run(speed)
+            angles = (-self.left_motor.angle()+left_start -
+                      right_start+self.right_motor.angle()) / 2
+            # print(angles)
+        
+        self.left_motor.run(0)
+        self.right_motor.run(0)
+        wait(1000)
+        while self.ultrasonic_sensor.distance() > 45w:
+            print(self.ultrasonic_sensor.distance())
+            self.left_motor.run(-self.base_speed)
+            self.right_motor.run(-self.base_speed)
+        self.left_motor.run(0)
+        self.right_motor.run(0)
+
+
+
     def grip_can(self):
 
         # Gripper
         grip_angle = -120
         grip_speed = 100
-
-        # Motor speed
-        hammer_speed = 500
-        print("[GRIP CAN]")
-        while True:
-            self.left_motor.run(- hammer_speed)  # Go reverse
-            self.right_motor.run(- hammer_speed)  # Go reverse
-
-            if self.touch_sensor.pressed():  # Touch sensor pressed
-                self.left_motor.run(0)  # Stop the motors
-                self.right_motor.run(0)  # Stop the motors
-                self.gripper_motor.run_angle(
+        self.gripper_motor.run_angle(
                     grip_speed, grip_angle)  # Close the gripper
 
-                return True
 
     def behaviour_tree(self):
         print("Behaviour Tree")
@@ -217,10 +308,8 @@ class Rescuer:
             #       "Middle: ", self.light_sensor.reflection(),
             #       "Right: ", self.line_sensor_right.reflection(), end="\r")
         # Reverse
-        self.left_motor.run(-self.base_speed/2)
-        self.right_motor.run(-self.base_speed/2)
-        wait(1000)
-        self.turn_180()
+        self.turn_angle(90)
+        self.scan_180()
         self.grip_can()
         while True:
             self.robot_pid_controller.run()

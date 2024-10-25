@@ -21,7 +21,9 @@ from pybricks.parameters import Port
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
 import time
+from pybricks.tools import wait
 from rescuer import Rescuer
+# import main_sand
 
 
 # ---------------------------------------------------------------------------- #
@@ -30,9 +32,12 @@ from rescuer import Rescuer
 
 
 def main():
+
     jerry = Rescuer()
     while True:
         jerry.behaviour_tree()
+        print("hej")
+
 
 
 if __name__ == "__main__":
