@@ -1,4 +1,4 @@
-Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle
+Index, Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle
 0, 0.02, 23, 64, 23, 0, 0, 0, 0, 0
 1, 0.08, 24, 64, 23, 0, 32, 3, 2, 2
 2, 0.14, 24, 67, 23, 0, 168, 165, 12, 10
