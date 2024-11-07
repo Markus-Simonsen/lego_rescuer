@@ -7,6 +7,8 @@ from pybricks.hubs import EV3Brick
 import time
 
 import PID as PID
+import csv
+# from csv import writer
 
 
 class Rescuer:
@@ -14,14 +16,15 @@ class Rescuer:
     ev3 = EV3Brick()
 
     # Initialize the motors.
-    gripper_motor = Motor(Port.A)
+    gripper_motor = Motor(Port.D)
     left_motor = Motor(Port.B)
     right_motor = Motor(Port.C)
 
     # Initialize the color sensor.
     line_sensor_right = ColorSensor(Port.S1)
     ultrasonic_sensor = UltrasonicSensor(Port.S2)
-    light_sensor = LightSensor(Port.S3)
+    # light_sensor = LightSensor(Port.S3)
+    touch = TouchSensor(Port.S3)
     line_sensor_left = ColorSensor(Port.S4)
 
     # Triple Light
@@ -63,7 +66,7 @@ class Rescuer:
         max_speed,
         line_sensor_left,
         line_sensor_right,
-        light_sensor,
+        None,  # light_sensor,
         left_motor,
         right_motor,
         line_follower_calibration
@@ -243,25 +246,31 @@ class Rescuer:
         # Total angle
         degrees_180 = 494
         degrees = degrees_180/180*angle
+        print("Degrres:", degrees)
 
         print("[CAN SCAN]")
         # Run the motors
         # array to store the readings at each interval of 5 angles in the 180 degree turn
         angle_readings = []
         angles_prev = 0
+        angles_list = []
         while angles < degrees:
 
             self.left_motor.run(speed)
             self.right_motor.run(-speed)
             angles_prev = angles
             angles = (self.left_motor.angle()-left_start +
-                      right_start-self.right_motor.angle()) / 2
+                      right_start-self.right_motor.angle()) // 2
             # store angles readings from the ultrasound sensor
             if angles % mod_sample == 0 and angles != angles_prev:
                 angle_readings.append(self.ultrasonic_sensor.distance())
+
+            angles_list.append(angles)
+            print("Angles_list", angles_list)
             # print(angles)
+
         print(len(angle_readings))
-        # print(angle_readings)
+        print(angle_readings)
 
         # return to the minimum distance reading
         min_distance = min(angle_readings)
@@ -281,8 +290,22 @@ class Rescuer:
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         if angle == 80:
             software_fix = 15
+            with open(self.filename1, "a") as file:
+                for i in range(len(angle_readings)):
+                    file.write(str(i*mod_sample) + "," +
+                               str(angle_readings[i]) + "\n")
+
+                # writer.writerow(["min_distance", min_distance])
+                # writer.writerow(["index", index])
+
         else:
-            software_fix = 0
+            software_fix = 15
+            with open(self.filename2, "a") as file:
+                for i in range(len(angle_readings)):
+                    file.write(str(i*mod_sample) + "," +
+                               str(angle_readings[i]) + "\n")
+                # writer.writerow(["min_distance", min_distance])
+                # writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         while angles < index*mod_sample+software_fix:  # SOFTWARE FIX
             self.left_motor.run(-speed)
@@ -331,7 +354,7 @@ class Rescuer:
             # print(self.ultrasonic_sensor.distance())
             self.left_motor.run(-self.base_speed)
             self.right_motor.run(-self.base_speed)
-        print("Distance: ", self.ultrasonic_sensor.distance())
+        # print("Distance: ", self.ultrasonic_sensor.distance())
         self.left_motor.run(0)
         self.right_motor.run(0)
 
@@ -339,20 +362,20 @@ class Rescuer:
         print("[TOUCH CAN]")
         grip_distance = 300
 
-        while self.ultrasonic_sensor.distance() < grip_distance:
+        while self.ultrasonic_sensor.distance() < grip_distance and self.ultrasonic_sensor.distance() > 39:
             # print(self.ultrasonic_sensor.distance())
             self.left_motor.run(-self.base_speed)
             self.right_motor.run(-self.base_speed)
 
-            print("Distance: ", self.ultrasonic_sensor.distance())
+            # print("Distance: ", self.ultrasonic_sensor.distance())
         self.left_motor.run(0)
         self.right_motor.run(0)
 
 # --------------------------------- Grip Can --------------------------------- #
-    def grip_can(self):
+    def grip_can(self, grip_angle=-100):
 
         # Gripper
-        grip_angle = -100
+
         grip_speed = 100
         self.gripper_motor.run_angle(
             grip_speed, grip_angle)  # Close the gripper
@@ -419,6 +442,9 @@ class Rescuer:
         self.left_motor.run(0)
         self.right_motor.run(0)
 
+    filename1 = 0
+    filename2 = 0
+
     def behaviour_tree(self):
         print("Behaviour Tree")
         # Print sensor values
@@ -428,6 +454,32 @@ class Rescuer:
         #           "Middle: ", self.light_sensor.reflection())
         #     wait(200)
         # TODO: maybe implement state machine
+        # Create a CSV file to collect angle and distance data
+        self.filename1 = "angle_distance1.csv"
+        with open(self.filename1, "w") as file:
+            file.write("Angle, Distance\n")
+
+        self.filename2 = "angle_distance2.csv"
+
+        with open(self.filename2, "w") as file:
+            file.write("Angle, Distance")
+
+        while True:
+            if self.touch.pressed():
+                self.turn_angle(-40)
+                self.can_scan(80)
+
+                self.approach_can()
+                self.turn_angle(-30)
+                self.can_scan(60)
+                self.touch_can()
+                self.grip_can()
+                self.grip_can(100)
+                # self.gripper_motor.run_angle(100, 90)  # Open the gripper
+
+        while True:
+            pass
+        # ---------------------------------- testing --------------------------------- #
         while (not self.triple_light(35)):
             self.robot_pid_controller.run()
             # Log
