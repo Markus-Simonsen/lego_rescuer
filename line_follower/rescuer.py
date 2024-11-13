@@ -232,7 +232,7 @@ class Rescuer:
 # --------------------------------- Scan 180 --------------------------------- #
     def can_scan(self, angle=180):
         # Scan Settings
-        speed = 50
+        speed = 40
         mod_sample = 1
         grip_distance = 38
 
@@ -251,7 +251,7 @@ class Rescuer:
         print("[CAN SCAN]")
         # Run the motors
         # array to store the readings at each interval of 5 angles in the 180 degree turn
-        angle_readings = []
+        scan_data = []
         angles_prev = 0
         angles_list = []
         while angles < degrees:
@@ -263,26 +263,29 @@ class Rescuer:
                       right_start-self.right_motor.angle()) // 2
             # store angles readings from the ultrasound sensor
             if angles % mod_sample == 0 and angles != angles_prev:
-                angle_readings.append(self.ultrasonic_sensor.distance())
+                scan_data.append(
+                    (angles, self.ultrasonic_sensor.distance()))
 
             angles_list.append(angles)
-            print("Angles_list", angles_list)
+
             # print(angles)
 
-        print(len(angle_readings))
-        print(angle_readings)
+        print(len(scan_data))
+        print(scan_data)
 
+        angle_readings = [x[0] for x in scan_data]
+        distance_readings = [x[1] for x in scan_data]
         # return to the minimum distance reading
-        min_distance = min(angle_readings)
+        min_distance = min(distance_readings)
         print(min_distance)
         # indices of min value
         min_indices = [index for index, value in enumerate(
-            angle_readings) if value == min_distance]
+            distance_readings) if value == min_distance]
         # find middle index of min indices
         index = min_indices[len(min_indices)//2]
         # index of min value from the other end of the list
         print(index)
-        index = len(angle_readings) - index
+        index = len(scan_data) - index
 
         angles = 0
         left_start = self.left_motor.angle()
@@ -291,9 +294,9 @@ class Rescuer:
         if angle == 80:
             software_fix = 15
             with open(self.filename1, "a") as file:
-                for i in range(len(angle_readings)):
-                    file.write(str(i*mod_sample) + "," +
-                               str(angle_readings[i]) + "\n")
+                for angle, distance in scan_data:
+                    file.write(str(angle) + "," +
+                               str(distance) + "\n")
 
                 # writer.writerow(["min_distance", min_distance])
                 # writer.writerow(["index", index])
@@ -301,9 +304,9 @@ class Rescuer:
         else:
             software_fix = 15
             with open(self.filename2, "a") as file:
-                for i in range(len(angle_readings)):
+                for i in range(len(scan_data)):
                     file.write(str(i*mod_sample) + "," +
-                               str(angle_readings[i]) + "\n")
+                               str(scan_data[i]) + "\n")
                 # writer.writerow(["min_distance", min_distance])
                 # writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
