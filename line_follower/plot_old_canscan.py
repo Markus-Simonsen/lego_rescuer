@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.show()
 # ----------------------------------- split ---------------------------------- #
-log_data = np.genfromtxt('angle_distance2.csv', delimiter=',')
+log_data = np.genfromtxt('angle_distance1.csv', delimiter=',')
 distances = log_data[1:, 1]
 angles = log_data[1:, 0]
 

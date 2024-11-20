@@ -55,7 +55,7 @@ class Rescuer:
     base_speed = 130
 
     # Calibration
-    line_follower_calibration = 1.4
+    line_follower_calibration = -1.4
 
     print("PID Controller Initialized")
     robot_pid_controller = PID.PID_controller(
@@ -66,7 +66,7 @@ class Rescuer:
         max_speed,
         line_sensor_left,
         line_sensor_right,
-        None,  # light_sensor,
+        None, #light_sensor,
         left_motor,
         right_motor,
         line_follower_calibration
@@ -169,8 +169,8 @@ class Rescuer:
         left_start = self.left_motor.angle()
         right_start = self.right_motor.angle()
         angles = 0
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
         # Turn speed
         speed = 100
 
@@ -197,8 +197,8 @@ class Rescuer:
                 # print(angles)
 
         # Stop the motors
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
         wait(200)
 
 # --------------------------------- Turn 180 --------------------------------- #
@@ -207,8 +207,8 @@ class Rescuer:
         left_start = self.left_motor.angle()
         right_start = self.right_motor.angle()
         angles = 0
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
         # Turn speed
         speed = 100
 
@@ -240,8 +240,8 @@ class Rescuer:
         left_start = self.left_motor.angle()
         right_start = self.right_motor.angle()
         angles = 0
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
 
         # Total angle
         degrees_180 = 494
@@ -256,6 +256,7 @@ class Rescuer:
         self.left_motor.run(speed)
         self.right_motor.run(-speed)
         while angles < degrees:
+        # while angles < 70:
             angles_prev = angles
             angles = (self.left_motor.angle()-left_start +
                       right_start-self.right_motor.angle()) // 2
@@ -263,8 +264,8 @@ class Rescuer:
             if angles % mod_sample == 0 and angles != angles_prev:
                 scan_data.append(
                     (angles, self.ultrasonic_sensor.distance()))
-        self.left_motor.stop()# Hello! I am Jerry, the rescuer robot. I am here to save the day!
-        self.right_motor.stop()
+        self.left_motor.hold()# Hello! I am Jerry, the rescuer robot. I am here to save the day!
+        self.right_motor.hold()
 
         print(len(scan_data))
         print(scan_data)
@@ -280,40 +281,39 @@ class Rescuer:
         # find middle index of min indices
         index = min_indices[len(min_indices)//2]
         # index of min value from the other end of the list
-        print(index)
-        return_angle = angle_readings[index]
-        index = len(scan_data) - index
+        return_angle = degrees - angle_readings[index]
 
         angles = 0
         left_start = self.left_motor.angle()
         right_start = self.right_motor.angle()
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         if angle == 80:
-            with open(self.filename1, "a") as file:
+            with open(self.filename1, "w") as file:
                 for angle, distance in scan_data:
                     file.write(str(angle) + "," +
                                str(distance) + "\n")
-
                 # writer.writerow(["min_distance", min_distance])
                 # writer.writerow(["index", index])
 
         else:
-            with open(self.filename2, "a") as file:
+            with open(self.filename2, "w") as file:
                 for angle, distance in scan_data:
                     file.write(str(angle) + "," +
                                str(distance) + "\n")
-                # writer.writerow(["min_distance", min_distance])
-                # writer.writerow(["index", index])
+                writer.writerow(["min_distance", min_distance])
+                writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         self.left_motor.run(-speed)
         self.right_motor.run(speed)
+        print("Return Angle: ", return_angle)
         while angles < return_angle:
+        # while angles < 70:
             angles = (-self.left_motor.angle()+left_start -
                       right_start+self.right_motor.angle()) // 2
             print(angles)
 
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.stop()
+        self.right_motor.stop()
         wait(200)
         return min_distance
 
@@ -353,21 +353,22 @@ class Rescuer:
             self.left_motor.run(-self.base_speed)
             self.right_motor.run(-self.base_speed)
         # print("Distance: ", self.ultrasonic_sensor.distance())
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
 
     def touch_can(self, grip_distance=38):
         print("[TOUCH CAN]")
-        grip_distance = 300
+        grip_distance = 700
 
-        while self.ultrasonic_sensor.distance() < grip_distance and self.ultrasonic_sensor.distance() > 39:
+        self.left_motor.run(-self.base_speed)
+        self.right_motor.run(-self.base_speed)
+        while self.ultrasonic_sensor.distance() < grip_distance and self.ultrasonic_sensor.distance() > 37:
             # print(self.ultrasonic_sensor.distance())
-            self.left_motor.run(-self.base_speed)
-            self.right_motor.run(-self.base_speed)
-
-            # print("Distance: ", self.ultrasonic_sensor.distance())
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+            print("Distance: ", self.ultrasonic_sensor.distance())
+        print("Distance: ", self.ultrasonic_sensor.distance())
+        wait(200)
+        self.left_motor.hold()
+        self.right_motor.hold()
 
 # --------------------------------- Grip Can --------------------------------- #
     def grip_can(self, grip_angle=-100):
@@ -384,8 +385,8 @@ class Rescuer:
 
         # Go straight
         if stop:
-            self.left_motor.run(0)
-            self.right_motor.run(0)
+            self.left_motor.hold()
+            self.right_motor.hold()
         else:
             self.left_motor.run(self.base_speed)
             self.right_motor.run(self.base_speed)
@@ -398,8 +399,8 @@ class Rescuer:
             ), self.light_sensor.reflection(), self.line_sensor_right.reflection()])
 
         # Stop
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
 
         left_sensor_values = [x[0] for x in sensor_values]
         middle_sensor_values = [x[1] for x in sensor_values]
@@ -437,8 +438,8 @@ class Rescuer:
                       "Middle: ", self.light_sensor.reflection(),
                       "Right: ", self.line_sensor_right.reflection())
             pass
-        self.left_motor.run(0)
-        self.right_motor.run(0)
+        self.left_motor.hold()
+        self.right_motor.hold()
 
     filename1 = 0
     filename2 = 0
@@ -460,23 +461,32 @@ class Rescuer:
         self.filename2 = "angle_distance2.csv"
 
         with open(self.filename2, "w") as file:
-            file.write("Angle, Distance")
+            file.write("Angle, Distance\n")
 
+        # ----------------------------- can scan testing ----------------------------- #
         while True:
             if self.touch.pressed():
                 self.turn_angle(-40)
                 self.can_scan(80)
-
-                self.approach_can()
-                self.turn_angle(-30)
-                self.can_scan(60)
+                # self.approach_can()
+                # self.turn_angle(-30)
+                # self.can_scan(60)
                 self.touch_can()
                 self.grip_can()
-                self.grip_can(100)
+                while not self.touch.pressed():
+                    self.robot_pid_controller.run()
+                # beep
+                self.ev3.speaker.beep()
+                self.gripper_motor.stop()
+                self.left_motor.hold()
+                self.right_motor.hold()
+                wait(200)
+                # self.grip_can()
+                # self.grip_can(100)
                 # self.gripper_motor.run_angle(100, 90)  # Open the gripper
 
-        while True:
-            pass
+        # while True:
+        #     pass
         # ---------------------------------- testing --------------------------------- #
         while (not self.triple_light(35)):
             self.robot_pid_controller.run()
@@ -491,9 +501,9 @@ class Rescuer:
         self.turn_angle(-40)
         self.can_scan(80)
 
-        self.approach_can()
-        self.turn_angle(-30)
-        self.can_scan(60)
+        # self.approach_can()
+        # self.turn_angle(-30)
+        # self.can_scan(60)
         self.touch_can()
         self.grip_can()
         while True:
@@ -502,8 +512,9 @@ class Rescuer:
 
 def main():
     jerry = Rescuer()
+
     # beep
-    jerry.ev3.speaker.beep()
+    # jerry.ev3.speaker.beep()
     # jerry.calibrate_line_follower()
     while True:
         jerry.behaviour_tree()

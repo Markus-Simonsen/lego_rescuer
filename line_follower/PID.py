@@ -213,7 +213,7 @@ class PID_controller:
         self.right_motor.run(self.right_speed)
 
         # Log the data.
-        self.log()
+        # self.log()
 
 
 # ---------------------------------------------------------------------------- #
