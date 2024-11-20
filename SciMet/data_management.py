@@ -1,15 +1,27 @@
 import os
 from os import path
 
-
+order_i = 0
 # ---------------------------------------------------------------------------- #
 #                                   FUNCTIONS                                  #
 # ---------------------------------------------------------------------------- #
 
+# Log sample number with degrees in CSV
+
+
+def get_folder_samples(folder_path):
+    return len(os.listdir(folder_path))
+
+
+def set_order_i(value):
+    global order_i
+    order_i = value
 # ----------------------------- Create new folder ---------------------------- #
-def create_folder(obs_continue=0):
+
+
+def create_folder(obs_continue=0, obs_name="observation"):
     # Make top folder
-    folder_path = "data"
+    folder_path = "data_V4"
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
@@ -20,7 +32,7 @@ def create_folder(obs_continue=0):
         count = len(os.listdir(folder_path)) + 1  # Make new observation
 
     # Make observation folder
-    folder_path = folder_path + "/observation_" + str(count)
+    folder_path = folder_path + "/"+obs_name+"_" + str(count)
 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -31,19 +43,30 @@ def create_folder(obs_continue=0):
 # Function to save the data to a csv file in unique folder
 
 
-def save_data(data, folder_path, filename="sample"):
+def save_data(data, folder_path, filename="sample", samples_per_location=5, locations=[30, 15, 0, -15, -30]):
+    global order_i
     # Assertion: Data is a list of tuples
     assert type(data) == list, "Data must be a list of tuples"
     assert type(data[0]) == tuple, "Data must be a list of tuples"
+    assert len(data) > 1, "Data must contain more than one element"
 
     print("[LOG]  Saving data to folder: ", folder_path)
 
     # Count samples
     dir_list = os.listdir(folder_path)
+
     count = len(dir_list) + 1
 
+    count_str = '{0:03d}'.format(count)
+    # Make sub count of 5 so it becomes 1.1, 1.2, 1.3, 1.4, 1.5
+
     # Make filename
-    filename = folder_path + "/" + filename + "_" + str(count) + ".csv"
+    filename = folder_path + "/" + filename + "_" + \
+        str(locations[order_i]) + "_" + count_str + ".csv"
+
+    # Update order_i
+    if count % samples_per_location == 0:
+        order_i += 1
 
     # Write data to file
     with open(filename, "w") as file:

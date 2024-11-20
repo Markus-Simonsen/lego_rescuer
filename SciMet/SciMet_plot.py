@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 
 
-folder_path = 'Data'
+folder_path = 'data'
 file_names = os.listdir(folder_path)
 
 
