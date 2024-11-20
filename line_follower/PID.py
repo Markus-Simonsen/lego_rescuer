@@ -156,6 +156,12 @@ class PID_controller:
             self.output = -self.max_speed
 
         # Set the motor speeds.
+        if self.output > 0:
+            self.left_speed = self.base_speed + self.output
+            self.right_speed = self.base_speed - 3*self.output
+        else:
+            self.right_speed = self.base_speed + abs(self.output)
+            self.left_speed = self.base_speed - 3*abs(self.output)
         self.left_speed = self.base_speed + self.output
         self.right_speed = self.base_speed - self.output
 

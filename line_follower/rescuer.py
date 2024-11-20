@@ -52,8 +52,8 @@ class Rescuer:
 
     # # Set the drive speed at 100 millimeters per second.
     max_speed = 500
-    base_speed = 160
-    search_speed = 250
+    base_speed = 180
+    search_speed = 200
 
     # Calibration
     line_follower_calibration = -1.4
@@ -382,6 +382,7 @@ class Rescuer:
         grip_speed = 200
         self.gripper_motor.run_angle(
             grip_speed, grip_angle)  # Close the gripper
+        print("[GRIP CAN]")
 
 # -------------------------- Calibrate Line Follower ------------------------- #
     def calibrate_line_follower(self, samples=1000, stop=False):
@@ -512,7 +513,11 @@ class Rescuer:
         # self.can_scan(60)
         self.touch_can()
         self.grip_can()
+        print("Grip")
         while True:
+            print("pid")
+            self.robot_pid_controller.left_speed = 0
+            self.robot_pid_controller.right_speed = 0
             self.robot_pid_controller.run()
 
 
