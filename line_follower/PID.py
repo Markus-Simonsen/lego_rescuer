@@ -80,6 +80,8 @@ class PID_controller:
 
         # Initialize the maximum speed.
         self.max_speed = max_speed
+        self.prev_left_speed = 0
+        self.prev_right_speed = 0
         self.left_speed = 50
         self.right_speed = 50
         self.output = 0
@@ -154,6 +156,12 @@ class PID_controller:
             self.output = -self.max_speed
 
         # Set the motor speeds.
+        if self.output > 0:
+            self.left_speed = self.base_speed + self.output
+            self.right_speed = self.base_speed - 3*self.output
+        else:
+            self.right_speed = self.base_speed + abs(self.output)
+            self.left_speed = self.base_speed - 3*abs(self.output)
         self.left_speed = self.base_speed + self.output
         self.right_speed = self.base_speed - self.output
 
@@ -190,8 +198,6 @@ class PID_controller:
         print("output: ", self.output, end="\n")
 
     def run(self):
-        print("[ANGLES] ", self.left_motor.angle(),
-              self.right_motor.angle(), end="\r")
         # Initialize the error.
         error = (
             self.line_sensor_left.reflection()
@@ -209,11 +215,17 @@ class PID_controller:
         # self.print_values()
 
         # Set the motor speeds.
-        self.left_motor.run(self.left_speed)
-        self.right_motor.run(self.right_speed)
+        if int(self.prev_left_speed) != int(self.left_speed) or int(self.prev_right_speed) != int(self.right_speed):
+            self.prev_left_speed = self.left_speed
+            self.prev_right_speed = self.right_speed
+            self.left_motor.run(self.left_speed)
+            self.right_motor.run(self.right_speed)
+        # else:
+            # print("saved time!!!")
+
 
         # Log the data.
-        self.log()
+        # self.log()
 
 
 # ---------------------------------------------------------------------------- #
