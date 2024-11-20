@@ -253,11 +253,9 @@ class Rescuer:
         # array to store the readings at each interval of 5 angles in the 180 degree turn
         scan_data = []
         angles_prev = 0
-        angles_list = []
+        self.left_motor.run(speed)
+        self.right_motor.run(-speed)
         while angles < degrees:
-
-            self.left_motor.run(speed)
-            self.right_motor.run(-speed)
             angles_prev = angles
             angles = (self.left_motor.angle()-left_start +
                       right_start-self.right_motor.angle()) // 2
@@ -265,10 +263,8 @@ class Rescuer:
             if angles % mod_sample == 0 and angles != angles_prev:
                 scan_data.append(
                     (angles, self.ultrasonic_sensor.distance()))
-
-            angles_list.append(angles)
-
-            # print(angles)
+        self.left_motor.stop()# Hello! I am Jerry, the rescuer robot. I am here to save the day!
+        self.right_motor.stop()
 
         print(len(scan_data))
         print(scan_data)
@@ -285,6 +281,7 @@ class Rescuer:
         index = min_indices[len(min_indices)//2]
         # index of min value from the other end of the list
         print(index)
+        return_angle = angle_readings[index]
         index = len(scan_data) - index
 
         angles = 0
@@ -292,7 +289,6 @@ class Rescuer:
         right_start = self.right_motor.angle()
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         if angle == 80:
-            software_fix = 15
             with open(self.filename1, "a") as file:
                 for angle, distance in scan_data:
                     file.write(str(angle) + "," +
@@ -302,20 +298,19 @@ class Rescuer:
                 # writer.writerow(["index", index])
 
         else:
-            software_fix = 15
             with open(self.filename2, "a") as file:
-                for i in range(len(scan_data)):
-                    file.write(str(i*mod_sample) + "," +
-                               str(scan_data[i]) + "\n")
+                for angle, distance in scan_data:
+                    file.write(str(angle) + "," +
+                               str(distance) + "\n")
                 # writer.writerow(["min_distance", min_distance])
                 # writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
-        while angles < index*mod_sample+software_fix:  # SOFTWARE FIX
-            self.left_motor.run(-speed)
-            self.right_motor.run(speed)
+        self.left_motor.run(-speed)
+        self.right_motor.run(speed)
+        while angles < return_angle:
             angles = (-self.left_motor.angle()+left_start -
-                      right_start+self.right_motor.angle()) / 2
-            # print(angles)
+                      right_start+self.right_motor.angle()) // 2
+            print(angles)
 
         self.left_motor.run(0)
         self.right_motor.run(0)
@@ -507,6 +502,8 @@ class Rescuer:
 
 def main():
     jerry = Rescuer()
+    # beep
+    jerry.ev3.speaker.beep()
     # jerry.calibrate_line_follower()
     while True:
         jerry.behaviour_tree()
