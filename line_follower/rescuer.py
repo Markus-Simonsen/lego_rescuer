@@ -23,8 +23,8 @@ class Rescuer:
     # Initialize the color sensor.
     line_sensor_right = ColorSensor(Port.S1)
     ultrasonic_sensor = UltrasonicSensor(Port.S2)
-    # light_sensor = LightSensor(Port.S3)
-    touch = TouchSensor(Port.S3)
+    light_sensor = LightSensor(Port.S3)
+    # touch = TouchSensor(Port.S3)
     line_sensor_left = ColorSensor(Port.S4)
 
     # Triple Light
@@ -52,7 +52,8 @@ class Rescuer:
 
     # # Set the drive speed at 100 millimeters per second.
     max_speed = 500
-    base_speed = 130
+    base_speed = 160
+    search_speed = 250
 
     # Calibration
     line_follower_calibration = -1.4
@@ -66,11 +67,14 @@ class Rescuer:
         max_speed,
         line_sensor_left,
         line_sensor_right,
-        None, #light_sensor,
+        # None, 
+        light_sensor,
         left_motor,
         right_motor,
         line_follower_calibration
     )
+
+
 
     def NOT(self):
         with open(self.filename, "a") as file:
@@ -172,7 +176,7 @@ class Rescuer:
         self.left_motor.hold()
         self.right_motor.hold()
         # Turn speed
-        speed = 100
+        speed = self.search_speed
 
         # Total angle
         degrees = angle
@@ -210,7 +214,7 @@ class Rescuer:
         self.left_motor.hold()
         self.right_motor.hold()
         # Turn speed
-        speed = 100
+        speed = self.search_speed
 
         # Total angle
         degrees_180 = angles + degrees
@@ -232,7 +236,7 @@ class Rescuer:
 # --------------------------------- Scan 180 --------------------------------- #
     def can_scan(self, angle=180):
         # Scan Settings
-        speed = 40
+        speed = self.search_speed
         mod_sample = 1
         grip_distance = 38
 
@@ -287,21 +291,21 @@ class Rescuer:
         left_start = self.left_motor.angle()
         right_start = self.right_motor.angle()
         # ------------------------------- SOFTWARE FIX ------------------------------- #
-        if angle == 80:
-            with open(self.filename1, "w") as file:
-                for angle, distance in scan_data:
-                    file.write(str(angle) + "," +
-                               str(distance) + "\n")
+        # if angle == 80:
+        #     with open(self.filename1, "w") as file:
+        #         for angle, distance in scan_data:
+        #             file.write(str(angle) + "," +
+        #                        str(distance) + "\n")
+        #         # writer.writerow(["min_distance", min_distance])
+        #         # writer.writerow(["index", index])
+
+        # else:
+        #     with open(self.filename2, "w") as file:
+        #         for angle, distance in scan_data:
+        #             file.write(str(angle) + "," +
+        #                        str(distance) + "\n")
                 # writer.writerow(["min_distance", min_distance])
                 # writer.writerow(["index", index])
-
-        else:
-            with open(self.filename2, "w") as file:
-                for angle, distance in scan_data:
-                    file.write(str(angle) + "," +
-                               str(distance) + "\n")
-                writer.writerow(["min_distance", min_distance])
-                writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         self.left_motor.run(-speed)
         self.right_motor.run(speed)
@@ -360,8 +364,8 @@ class Rescuer:
         print("[TOUCH CAN]")
         grip_distance = 700
 
-        self.left_motor.run(-self.base_speed)
-        self.right_motor.run(-self.base_speed)
+        self.left_motor.run(-self.search_speed)
+        self.right_motor.run(-self.search_speed)
         while self.ultrasonic_sensor.distance() < grip_distance and self.ultrasonic_sensor.distance() > 37:
             # print(self.ultrasonic_sensor.distance())
             print("Distance: ", self.ultrasonic_sensor.distance())
@@ -375,7 +379,7 @@ class Rescuer:
 
         # Gripper
 
-        grip_speed = 100
+        grip_speed = 200
         self.gripper_motor.run_angle(
             grip_speed, grip_angle)  # Close the gripper
 
@@ -464,7 +468,7 @@ class Rescuer:
             file.write("Angle, Distance\n")
 
         # ----------------------------- can scan testing ----------------------------- #
-        while True:
+        while False:
             if self.touch.pressed():
                 self.turn_angle(-40)
                 self.can_scan(80)
@@ -481,6 +485,8 @@ class Rescuer:
                 self.left_motor.hold()
                 self.right_motor.hold()
                 wait(200)
+                self.base_speed = self.base_speed*1.2
+                print("Speed: ", self.base_speed)
                 # self.grip_can()
                 # self.grip_can(100)
                 # self.gripper_motor.run_angle(100, 90)  # Open the gripper
