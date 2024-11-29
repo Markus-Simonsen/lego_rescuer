@@ -1,10 +1,12 @@
+#!/usr/bin/env pybricks-micropython
+
 from pybricks.ev3devices import Motor, ColorSensor, TouchSensor, UltrasonicSensor
 from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
-import time
+# import time
 
 import PID as PID
 import csv
@@ -28,8 +30,8 @@ class Rescuer:
     line_sensor_left = ColorSensor(Port.S4)
 
     # Triple Light
-    white_threshold = 17
-    light_threshold = 45  # 48 før
+    white_threshold = 17  # 17 før
+    light_threshold = 43  # 45 før
 
     triple_light_list = [0]
     triple_white = False
@@ -38,25 +40,27 @@ class Rescuer:
     # Initialize the logger
     log_i = 0
     filename = "log.csv"
-    start_time = time.time()
-    with open(filename, "a") as file:
-        file.write(
-            "Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
-        )
+    # start_time = time.time()
+    # with open(filename, "a") as file:
+    #     file.write(
+    #         "Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
+    #     )
 
     # ---------------------------- PID Initialization ---------------------------- #
     # Initialize the PID controller.
-    KP = 40
-    KI = 0
-    KD = 5
+    KP = 40  # 40
+    KI = 0  # 0
+    KD = 5  # 5
 
     # # Set the drive speed at 100 millimeters per second.
     max_speed = 500
-    base_speed = 180
-    search_speed = 200
+    base_speed = 170
+    search_speed = 180
+    turn_speed = 180
+    print("Base Speed: ", base_speed)
 
     # Calibration
-    line_follower_calibration = -1.4
+    line_follower_calibration = -0.32
 
     print("PID Controller Initialized")
     robot_pid_controller = PID.PID_controller(
@@ -67,26 +71,24 @@ class Rescuer:
         max_speed,
         line_sensor_left,
         line_sensor_right,
-        # None, 
+        # None,
         light_sensor,
         left_motor,
         right_motor,
         line_follower_calibration
     )
 
-
-
     def NOT(self):
         with open(self.filename, "a") as file:
             # Get the current time in seconds.
-            current_time = int((time.time() - self.start_time)*100)/100
+            # current_time = int((time.time() - self.start_time)*100)/100
             log_i = self.log_i
             # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
             # Write the current time to the file.
             file.write(
                 str(log_i)
                 + ", "
-                + str(current_time)
+                # + str(current_time)
                 + ", "
                 + str(self.line_sensor_left.reflection())
                 + ", "
@@ -142,8 +144,8 @@ class Rescuer:
                 self.line_sensor_left.reflection() > self.white_threshold):
             # Print reflections
             # print("Left: ", self.line_sensor_left.reflection(),
-            #      "Middle: ", self.light_sensor.reflection(),
-            #      "Right: ", self.line_sensor_right.reflection())
+            #       "Middle: ", self.light_sensor.reflection(),
+            #       "Right: ", self.line_sensor_right.reflection())
             print("[TRIPLE LIGHT] ", self.triple_light_count)
 
             if self.triple_white == False:  # If not already white
@@ -214,7 +216,7 @@ class Rescuer:
         self.left_motor.hold()
         self.right_motor.hold()
         # Turn speed
-        speed = self.search_speed
+        speed = self.turn_speed
 
         # Total angle
         degrees_180 = angles + degrees
@@ -260,7 +262,7 @@ class Rescuer:
         self.left_motor.run(speed)
         self.right_motor.run(-speed)
         while angles < degrees:
-        # while angles < 70:
+            # while angles < 70:
             angles_prev = angles
             angles = (self.left_motor.angle()-left_start +
                       right_start-self.right_motor.angle()) // 2
@@ -268,7 +270,7 @@ class Rescuer:
             if angles % mod_sample == 0 and angles != angles_prev:
                 scan_data.append(
                     (angles, self.ultrasonic_sensor.distance()))
-        self.left_motor.hold()# Hello! I am Jerry, the rescuer robot. I am here to save the day!
+        self.left_motor.hold()  # Hello! I am Jerry, the rescuer robot. I am here to save the day!
         self.right_motor.hold()
 
         print(len(scan_data))
@@ -296,22 +298,22 @@ class Rescuer:
         #         for angle, distance in scan_data:
         #             file.write(str(angle) + "," +
         #                        str(distance) + "\n")
-        #         # writer.writerow(["min_distance", min_distance])
-        #         # writer.writerow(["index", index])
+        # writer.writerow(["min_distance", min_distance])
+        # writer.writerow(["index", index])
 
         # else:
         #     with open(self.filename2, "w") as file:
         #         for angle, distance in scan_data:
         #             file.write(str(angle) + "," +
         #                        str(distance) + "\n")
-                # writer.writerow(["min_distance", min_distance])
-                # writer.writerow(["index", index])
+        # writer.writerow(["min_distance", min_distance])
+        # writer.writerow(["index", index])
         # ------------------------------- SOFTWARE FIX ------------------------------- #
         self.left_motor.run(-speed)
         self.right_motor.run(speed)
         print("Return Angle: ", return_angle)
         while angles < return_angle:
-        # while angles < 70:
+            # while angles < 70:
             angles = (-self.left_motor.angle()+left_start -
                       right_start+self.right_motor.angle()) // 2
             print(angles)
@@ -364,8 +366,8 @@ class Rescuer:
         print("[TOUCH CAN]")
         grip_distance = 700
 
-        self.left_motor.run(-self.search_speed)
-        self.right_motor.run(-self.search_speed)
+        self.left_motor.run(-self.turn_speed)
+        self.right_motor.run(-self.turn_speed)
         while self.ultrasonic_sensor.distance() < grip_distance and self.ultrasonic_sensor.distance() > 37:
             # print(self.ultrasonic_sensor.distance())
             print("Distance: ", self.ultrasonic_sensor.distance())
@@ -450,7 +452,11 @@ class Rescuer:
     filename2 = 0
 
     def behaviour_tree(self):
+
         print("Behaviour Tree")
+        # while True:
+        #     # PID
+        #     self.robot_pid_controller.run()
         # Print sensor values
         # while True:
         #     print("Left: ", self.line_sensor_left.reflection(),
@@ -459,14 +465,14 @@ class Rescuer:
         #     wait(200)
         # TODO: maybe implement state machine
         # Create a CSV file to collect angle and distance data
-        self.filename1 = "angle_distance1.csv"
-        with open(self.filename1, "w") as file:
-            file.write("Angle, Distance\n")
+        # self.filename1 = "angle_distance1.csv"
+        # with open(self.filename1, "w") as file:
+        #     file.write("Angle, Distance\n")
 
-        self.filename2 = "angle_distance2.csv"
+        # self.filename2 = "angle_distance2.csv"
 
-        with open(self.filename2, "w") as file:
-            file.write("Angle, Distance\n")
+        # with open(self.filename2, "w") as file:
+        #     file.write("Angle, Distance\n")
 
         # ----------------------------- can scan testing ----------------------------- #
         while False:
@@ -516,8 +522,8 @@ class Rescuer:
         print("Grip")
         while True:
             print("pid")
-            self.robot_pid_controller.left_speed = 0
-            self.robot_pid_controller.right_speed = 0
+            self.robot_pid_controller.prev_left_speed = 0
+            self.robot_pid_controller.prev_right_speed = 0
             self.robot_pid_controller.run()
 
 

@@ -20,7 +20,7 @@ from pybricks.nxtdevices import LightSensor
 from pybricks.parameters import Port
 from pybricks.robotics import DriveBase
 from pybricks.hubs import EV3Brick
-import time
+# import time
 
 
 # ---------------------------------------------------------------------------- #
@@ -75,7 +75,7 @@ class PID_controller:
         self.integral = 0
         self.derivative = 0
         self.last_error = 0
-        self.last_time = time.time()
+        # self.last_time = time.time()
         self.calibration = line_follower_calibration
 
         # Initialize the maximum speed.
@@ -86,27 +86,28 @@ class PID_controller:
         self.right_speed = 50
         self.output = 0
 
-        # Initialize the logger
+        self.sample_count = 0
 
+        # Initialize the logger
         self.log_i = 0
         self.filename = "log.csv"
-        self.start_time = time.time()
-        with open(self.filename, "a") as file:
-            file.write(
-                "Index, Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
-            )
+        # self.start_time = time.time()
+        # with open(self.filename, "a") as file:
+        #     file.write(
+        #         "Index, Time, Left_sensor,Light_sensor, Right_sensor, Triple_light, Left_motor_speed, Right_motor_speed, Left_motor_angle, Right_motor_angle\n"
+        #     )
 
     def log(self):
         with open(self.filename, "a") as file:
             # Get the current time in seconds.
-            current_time = int((time.time() - self.start_time)*100)/100
+            # current_time = int((time.time() - self.start_time)*100)/100
 
             # log = "{}, {}, {}, {}, {}\n".format(current_time, line_sensor_left.reflection(), line_sensor_right.reflection(), left_motor.speed(), right_motor.speed())
             # Write the current time to the file.
             file.write(
                 str(self.log_i)
                 + ", "
-                + str(current_time)
+                # + str(current_time)
                 + ", "
                 + str(self.line_sensor_left.reflection())
                 + ", "
@@ -146,7 +147,8 @@ class PID_controller:
         self.output = (
             self.kp * error
             + self.ki * self.integral
-            + self.kd * self.derivative / (time.time() - self.last_time)
+            # (time.time() - self.last_time)
+            + self.kd * self.derivative / 0.01
         )
 
         # Cap speed
@@ -155,18 +157,18 @@ class PID_controller:
         elif self.output < -self.max_speed:
             self.output = -self.max_speed
 
+        self.left_speed = self.base_speed + self.output
+        self.right_speed = self.base_speed - self.output
         # Set the motor speeds.
         if self.output > 0:
             self.left_speed = self.base_speed + self.output
-            self.right_speed = self.base_speed - 3*self.output
+            self.right_speed = self.base_speed - 1.5*self.output
         else:
             self.right_speed = self.base_speed + abs(self.output)
-            self.left_speed = self.base_speed - 3*abs(self.output)
-        self.left_speed = self.base_speed + self.output
-        self.right_speed = self.base_speed - self.output
+            self.left_speed = self.base_speed - 1.5*abs(self.output)
 
         # Check for sharp turns
-        speed_diff = self.base_speed * 3
+        speed_diff = int(self.base_speed * 2.5)
         if (
             self.line_sensor_left.reflection() > self.white_threshold
             and self.line_sensor_right.reflection() < self.black_threshold
@@ -181,7 +183,7 @@ class PID_controller:
             self.right_speed = speed_diff
 
         # Update the time.
-        self.last_time = time.time()
+        # self.last_time = time.time()
 
     # def incline(self):
 
@@ -221,10 +223,10 @@ class PID_controller:
             self.left_motor.run(self.left_speed)
             self.right_motor.run(self.right_speed)
         # else:
-            # print("saved time!!!")
-
-
-        # Log the data.
+        # print("saved time!!!")
+        # self.left_motor.run(self.left_speed)
+        # self.right_motor.run(self.right_speed)
+        # # Log the data.
         # self.log()
 
 
@@ -273,25 +275,26 @@ def main():
     max_speed = 500
     base_speed = 130
 
-    my_PID = PID_controller(
-        KP,
-        KI,
-        KD,
-        base_speed,
-        max_speed,
-        line_sensor_left,
-        line_sensor_right,
-        light_sensor,
-        left_motor,
-        right_motor,
-    )
+    # my_PID = PID_controller(
+    #     KP,
+    #     KI,
+    #     KD,
+    #     base_speed,
+    #     max_speed,
+    #     line_sensor_left,
+    #     line_sensor_right,
+    #     light_sensor,
+    #     left_motor,
+    #     right_motor,
+    # )
     # -------------------------------- While Loop -------------------------------- #
     # Start following the line endlessly.
     light = []
     while True:
+        pass
 
         # PID controller
-        my_PID.run()
+        # my_PID.run()
 
         # Print light sensor values
         # light.append(light_sensor.reflection())

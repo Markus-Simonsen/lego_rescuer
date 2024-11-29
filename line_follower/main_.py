@@ -38,7 +38,7 @@ def main():
     jerry = Rescuer()
     # jerry.check_turn_calibration(degrees_180=494)
     jerry.ev3.speaker.beep()
-    # jerry.calibrate_line_follower(samples=5000, stop=False)
+    jerry.calibrate_line_follower(samples=5000, stop=False)
     # while True:
     #     print("Distance: ", jerry.ultrasonic_sensor.distance(), end="\r")
     while True:
